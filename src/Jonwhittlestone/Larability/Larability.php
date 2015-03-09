@@ -321,12 +321,13 @@ class Larability {
       
       // download file
       $filename = $parts['filename'].'-'.time().'.'.$parts['extension'];
+      $dir = base_path().Config::get('larability::leadImageStoragePath').'/'.date('Ymd');
       
-      if (!mkdir(base_path().Config::get('larability::leadImageStoragePath'), 0777, true)) {
+      if (!file_exists($dir) && !mkdir($dir, 0777, true)) {
         return;
       }
 
-      $path = base_path().Config::get('larability::leadImageStoragePath').'/'.$filename;
+      $path = $dir.'/'.$filename;
 
       $ch = curl_init($imageUrl);
       curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -335,10 +336,17 @@ class Larability {
 
       if(file_put_contents($path, $data))
       {
-        return [
-          'path' => $path,
-          'filename' => $filename
-        ];
+          $details = getimagesize($path);
+
+          return [
+            'path' => $path,
+            'filename' => $filename,
+            'size' => filesize($path),
+            'type' =>$details['mime'],
+            'width' => $details[0],
+            'height' => $details[1]
+
+          ];
       }
 
 
