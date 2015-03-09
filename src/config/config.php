@@ -2,6 +2,6 @@
 
 return array(
 
-	'leadImageStoragePath' => '/public/img/larability',
+	'leadImageStoragePath' => '/public/packages/jonwhittlestone/larability/img',
 
 );

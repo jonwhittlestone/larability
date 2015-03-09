@@ -71,7 +71,7 @@ class Larability {
     $content =  $this->getContent($Target);
 
     return [
-            'lead_image_url' => $this->getLeadImageUrl($Target),
+            'lead_image_url' => $this->getLeadImageUrl($Target,$url),
             'word_count' => mb_strlen(strip_tags($content), Larability::DOM_DEFAULT_CHARSET),
             'title' => $title ? $title : null,
             'content' => $content
@@ -298,11 +298,12 @@ class Larability {
      *
      * @return String
      */
-    public function getLeadImageUrl($node) {
+    public function getLeadImageUrl($node,$pageUrl) 
+    {
         $images = $node->getElementsByTagName("img");
 
         if ($images->length && $leadImage = $images->item(0)) {
-            return $leadImage->getAttribute("src");
+            return (!strstr('http://',$leadImage->getAttribute("src")) ? $this->getAbsoluteImageUrl($pageUrl,$leadImage->getAttribute("src")) : $leadImage->getAttribute("src"));
         }
 
         return null;
@@ -316,8 +317,8 @@ class Larability {
       $ContentBox = $this->getTopBox();
       $Target = $this->buildTarget($ContentBox);
 
-      $imageUrl = $this->getLeadImageUrl($Target);
-      if($imageUrl == null) return;
+      $imageUrl = $this->getLeadImageUrl($Target, $pageUrl);
+      //if($imageUrl == null) return;
 
       $parts = pathinfo($imageUrl);      
       
@@ -351,8 +352,30 @@ class Larability {
           ];
       }
 
-
-      
+    }
+    
+    function getAbsoluteImageUrl($pageUrl,$imgSrc)
+    {
+      $imgInfo = parse_url($imgSrc);
+      if (! empty($imgInfo['host'])) {
+          //img src is already an absolute URL
+          return $imgSrc;
+      }
+      else {
+          $urlInfo = parse_url($pageUrl);
+          $base = $urlInfo['scheme'].'://'.$urlInfo['host'];
+          if (substr($imgSrc,0,1) == '/') {
+              //img src is relative from the root URL
+              return $base . $imgSrc;
+          }
+          else {
+              //img src is relative from the current directory
+                 return 
+                      $base
+                      . substr($urlInfo['path'],0,strrpos($urlInfo['path'],'/'))
+                      . '/' . $imgSrc;
+          }
+      }
     }
 
 }
