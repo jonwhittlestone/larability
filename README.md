@@ -16,7 +16,7 @@ In your `config/app.php` add `'Jonwhittlestone\Larability\LarabilityServiceProvi
     'Jonwhittlestone\Larability\LarabilityServiceProvider',
 
 ),
-
+```
 
 Publish the larability image directory
 
@@ -24,3 +24,6 @@ Publish the larability image directory
 
 
 ####How to Use
+
+    $results = Larability::read('http://www.bbc.co.uk/news/uk-31792238');
+    print '<pre>' . print_r($results, true) . '</pre>';
