@@ -317,7 +317,9 @@ class Larability {
       $Target = $this->buildTarget($ContentBox);
 
       $imageUrl = $this->getLeadImageUrl($Target);
-      $parts = pathinfo($imageUrl);
+      if($imageUrl == null) return;
+
+      $parts = pathinfo($imageUrl);      
       
       // download file
       $filename = $parts['filename'].'-'.time().'.'.$parts['extension'];
