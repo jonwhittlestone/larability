@@ -141,9 +141,8 @@ class Larability {
 
   public function buildTarget($ContentBox)
   {
-     // Check if we found a suitable top-box.
-        if($ContentBox === null)
-            throw new RuntimeException(Larability::MESSAGE_CAN_NOT_GET);
+      // Check if we found a suitable top-box.
+      if($ContentBox === null) return ['status' => 'fail', 'message' => Larability::MESSAGE_CAN_NOT_GET,'url' => $this->source].
         
 
       //  DOMDocument
