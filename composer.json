@@ -1,0 +1,23 @@
+{
+    "name": "jonwhittlestone/larability",
+    "description": "",
+    "authors": [
+        {
+            "name": "Jon Whittlestone",
+            "email": "dev@howapped.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.0",
+        "illuminate/support": "4.2.*"
+    },
+    "autoload": {
+        "classmap": [
+            "src/migrations"
+        ],
+        "psr-0": {
+            "Jonwhittlestone\\Larability\\": "src/"
+        }
+    },
+    "minimum-stability": "stable"
+}
