@@ -1,6 +1,7 @@
 <?php namespace Jonwhittlestone\Larability;
 
 use DOMDocument;
+use Config;
 
 /**
  * PHP Readability
@@ -62,7 +63,20 @@ class Larability {
     $this->getUrl($url);
     $this->loadDomFromSource();
     
-    return $this->getContent();
+    $title = $this->getTitle();
+    $ContentBox = $this->getTopBox();
+    if (!$this->DOM) return false;
+    $Target = $this->buildTarget($ContentBox);
+
+    $content =  $this->getContent($Target);
+
+    return [
+            'lead_image_url' => $this->getLeadImageUrl($Target),
+            'word_count' => mb_strlen(strip_tags($content), Larability::DOM_DEFAULT_CHARSET),
+            'title' => $title ? $title : null,
+            'content' => $content
+        ];
+
   }
 
   public function getUrl($url)
@@ -100,7 +114,6 @@ class Larability {
         // DOM 解析类只能处理 UTF-8 格式的字符
         $source = mb_convert_encoding($this->source, 'HTML-ENTITIES', $input_char);
 
-
         // 预处理 HTML 标签，剔除冗余的标签等
         $source = $this->preparSource($source);
 
@@ -126,45 +139,37 @@ class Larability {
         }
   }
 
-  public function getContent()
+  public function buildTarget($ContentBox)
   {
-    if (!$this->DOM) return false;
-
-        // 获取页面标题
-        $ContentTitle = $this->getTitle();
-
-        // 获取页面主内容
-        $ContentBox = $this->getTopBox();
-        
-        //Check if we found a suitable top-box.
+     // Check if we found a suitable top-box.
         if($ContentBox === null)
             throw new RuntimeException(Larability::MESSAGE_CAN_NOT_GET);
         
-        // 复制内容到新的 DOMDocument
-        $Target = new DOMDocument;
-        $Target->appendChild($Target->importNode($ContentBox, true));
 
-        // 删除不需要的标签
-        foreach ($this->junkTags as $tag) 
-        {
-            $Target = $this->removeJunkTag($Target, $tag);
-        }
+      //  DOMDocument
+      $Target = new DOMDocument;
+      $Target->appendChild($Target->importNode($ContentBox, true));
 
-        // 删除不需要的属性
-        foreach ($this->junkAttrs as $attr)
-        {
-          $Target = $this->removeJunkAttr($Target, $attr);
-        }
+      // 删除不需要的标签
+      foreach ($this->junkTags as $tag) 
+      {
+          $Target = $this->removeJunkTag($Target, $tag);
+      }
 
-        $content = mb_convert_encoding($Target->saveHTML(), Larability::DOM_DEFAULT_CHARSET, "HTML-ENTITIES");
 
-        // 多个数据，以数组的形式返回
-        return [
-            'lead_image_url' => $this->getLeadImageUrl($Target),
-            'word_count' => mb_strlen(strip_tags($content), Larability::DOM_DEFAULT_CHARSET),
-            'title' => $ContentTitle ? $ContentTitle : null,
-            'content' => $content
-        ];
+      foreach ($this->junkAttrs as $attr)
+      {
+        $Target = $this->removeJunkAttr($Target, $attr);
+      }
+
+      return $Target;
+
+  }
+
+  public function getContent($Target)
+  {
+      $content = mb_convert_encoding($Target->saveHTML(), Larability::DOM_DEFAULT_CHARSET, "HTML-ENTITIES");
+      return $content;
   }
 
   /**
@@ -303,9 +308,41 @@ class Larability {
         return null;
     }
 
-    public function saveLeadImage($path)
+    public function saveLeadImage($pageUrl)
     {
-        // $path = Config::get();
+
+      $this->getUrl($pageUrl);
+      $this->loadDomFromSource();
+      $ContentBox = $this->getTopBox();
+      $Target = $this->buildTarget($ContentBox);
+
+      $imageUrl = $this->getLeadImageUrl($Target);
+      $parts = pathinfo($imageUrl);
+      
+      // download file
+      $filename = $parts['filename'].'-'.time().'.'.$parts['extension'];
+      
+      if (!mkdir(base_path().Config::get('larability::leadImageStoragePath'), 0777, true)) {
+        return;
+      }
+
+      $path = base_path().Config::get('larability::leadImageStoragePath').'/'.$filename;
+
+      $ch = curl_init($imageUrl);
+      curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+      $data = curl_exec($ch);
+      curl_close($ch);
+
+      if(file_put_contents($path, $data))
+      {
+        return [
+          'path' => $path,
+          'filename' => $filename
+        ];
+      }
+
+
+      
     }
 
 }
