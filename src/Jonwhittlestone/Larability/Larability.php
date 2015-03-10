@@ -2,7 +2,7 @@
 
 use DOMDocument;
 use Config;
-
+use Exception;
 
 /**
  * PHP Readability
@@ -62,7 +62,9 @@ class Larability {
 
   public function read($url)
   {
-    $this->getUrl($url);
+    $url = $this->getUrl($url);
+    if(!$url) return;
+
     $this->loadDomFromSource();
 
     $title = $this->getTitle();
@@ -84,9 +86,14 @@ class Larability {
   public function getUrl($url)
   {
     //$this->source = file_get_contents($url);
-    $client = new \GuzzleHttp\Client(['base_url' => $url]);
-    $response = $client->get();
-    $this->source = (string)$response->getBody();
+    try {
+      $client = new \GuzzleHttp\Client(['base_url' => $url]);
+      $response = $client->get();
+      $this->source = (string)$response->getBody();
+    } catch( Exception $e){
+            return;
+        }
+
   }
 
   /**
@@ -316,7 +323,8 @@ class Larability {
     public function saveLeadImage($pageUrl)
     {
 
-      $this->getUrl($pageUrl);
+      $url = $this->getUrl($pageUrl);
+      if(!$url) return;
       $this->loadDomFromSource();
       $ContentBox = $this->getTopBox();
       $Target = $this->buildTarget($ContentBox);
