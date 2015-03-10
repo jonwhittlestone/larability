@@ -345,21 +345,21 @@ class Larability {
         return;
       }
 
-      $path = $dir.'/'.$filename;
+      $path = Config::get('larability::leadImageStoragePath').'/'.date('Ymd').'/'.$filename;
 
       $ch = curl_init($imageUrl);
       curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
       $data = curl_exec($ch);
       curl_close($ch);
 
-      if(file_put_contents($path, $data))
+      if(file_put_contents($dir.'/'.$filename, $data))
       {
-          $details = getimagesize($path);
+          $details = getimagesize($dir.'/'.$filename);
 
           return [
             'path' => $path,
             'filename' => $filename,
-            'size' => filesize($path),
+            'size' => filesize($dir.'/'.$filename),
             'type' =>$details['mime'],
             'width' => $details[0],
             'height' => $details[1]
