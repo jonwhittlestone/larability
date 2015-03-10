@@ -62,7 +62,7 @@ class Larability {
   {
     $this->getUrl($url);
     $this->loadDomFromSource();
-    
+
     $title = $this->getTitle();
     $ContentBox = $this->getTopBox();
     if (!$this->DOM) return false;
@@ -89,7 +89,7 @@ class Larability {
    *
    * @return String
    */
-  private function preparSource($string) 
+  private function preparSource($string)
   {
       // 剔除多余的 HTML 编码标记，避免解析出错
       preg_match("/charset=([\w|\-]+);?/", $string, $match);
@@ -142,15 +142,14 @@ class Larability {
   public function buildTarget($ContentBox)
   {
       // Check if we found a suitable top-box.
-      if($ContentBox === null) return ['status' => 'fail', 'message' => Larability::MESSAGE_CAN_NOT_GET,'url' => $this->source].
-        
+      if($ContentBox === null) return;// ['status' => 'fail', 'message' => Larability::MESSAGE_CAN_NOT_GET,'url' => $this->source].
 
       //  DOMDocument
       $Target = new DOMDocument;
       $Target->appendChild($Target->importNode($ContentBox, true));
 
       // 删除不需要的标签
-      foreach ($this->junkTags as $tag) 
+      foreach ($this->junkTags as $tag)
       {
           $Target = $this->removeJunkTag($Target, $tag);
       }
@@ -180,7 +179,7 @@ class Larability {
         $split_point = ' - ';
         $titleNodes = $this->DOM->getElementsByTagName("title");
 
-        if ($titleNodes->length 
+        if ($titleNodes->length
             && $titleNode = $titleNodes->item(0)) {
             // @see http://stackoverflow.com/questions/717328/how-to-explode-string-right-to-left
             $title  = trim($titleNode->nodeValue);
@@ -196,7 +195,7 @@ class Larability {
      *
      * @return DOMNode
      */
-    private function getTopBox() 
+    private function getTopBox()
     {
         // 获得页面所有的章节
         $allParagraphs = $this->DOM->getElementsByTagName("p");
@@ -242,9 +241,9 @@ class Larability {
         }
 
         $topBox = null;
-        
-        // Assignment from index for performance. 
-        //     See http://www.peachpit.com/articles/article.aspx?p=31567&seqNum=5 
+
+        // Assignment from index for performance.
+        //     See http://www.peachpit.com/articles/article.aspx?p=31567&seqNum=5
         for ($i = 0, $len = sizeof($this->parentNodes); $i < $len; $i++) {
             $parentNode      = $this->parentNodes[$i];
             $contentScore    = intval($parentNode->getAttribute(Larability::ATTR_CONTENT_SCORE));
@@ -254,7 +253,7 @@ class Larability {
                 $topBox = $parentNode;
             }
         }
-        
+
         // 此时，$topBox 应为已经判定后的页面内容主元素
         return $topBox;
     }
@@ -264,17 +263,17 @@ class Larability {
      *
      * @return DOMDocument
      */
-    private function removeJunkTag($RootNode, $TagName) 
+    private function removeJunkTag($RootNode, $TagName)
     {
-        
+
         $Tags = $RootNode->getElementsByTagName($TagName);
-        
+
         //Note: always index 0, because removing a tag removes it from the results as well.
         while($Tag = $Tags->item(0)){
             $parentNode = $Tag->parentNode;
             $parentNode->removeChild($Tag);
         }
-        
+
         return $RootNode;
     }
 
@@ -297,7 +296,7 @@ class Larability {
      *
      * @return String
      */
-    public function getLeadImageUrl($node,$pageUrl) 
+    public function getLeadImageUrl($node,$pageUrl)
     {
         $images = $node->getElementsByTagName("img");
 
@@ -316,15 +315,17 @@ class Larability {
       $ContentBox = $this->getTopBox();
       $Target = $this->buildTarget($ContentBox);
 
+      if(!$Target) return;
+
       $imageUrl = $this->getLeadImageUrl($Target, $pageUrl);
       //if($imageUrl == null) return;
 
-      $parts = pathinfo($imageUrl);      
-      
+      $parts = pathinfo($imageUrl);
+
       // download file
       $filename = $parts['filename'].'-'.time().'.'.$parts['extension'];
       $dir = base_path().Config::get('larability::leadImageStoragePath').'/'.date('Ymd');
-      
+
       if (!file_exists($dir) && !mkdir($dir, 0777, true)) {
         return;
       }
@@ -352,7 +353,7 @@ class Larability {
       }
 
     }
-    
+
     function getAbsoluteImageUrl($pageUrl,$imgSrc)
     {
       $imgInfo = parse_url($imgSrc);
@@ -369,7 +370,7 @@ class Larability {
           }
           else {
               //img src is relative from the current directory
-                 return 
+                 return
                       $base
                       . substr($urlInfo['path'],0,strrpos($urlInfo['path'],'/'))
                       . '/' . $imgSrc;
