@@ -324,7 +324,7 @@ class Larability {
       if(!$Target) return;
 
       $imageUrl = $this->getLeadImageUrl($Target, $pageUrl);
-      //if($imageUrl == null) return;
+      if($imageUrl == null) return;
 
       $parts = pathinfo($imageUrl);
 
