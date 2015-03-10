@@ -2,6 +2,8 @@
 
 return array(
 
-	'leadImageStoragePath' => '/public/packages/jonwhittlestone/larability/img',
+	// relative to public
+	
+	'leadImageStoragePath' => '/packages/jonwhittlestone/larability/img',
 
 );

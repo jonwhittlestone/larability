@@ -358,7 +358,7 @@ class Larability {
 
           return [
             'absolutePath' => $dir.'/'.$filename,
-            'pathRelativeToBase' => $path,
+            'pathRelativeToPublic' => $path,
             'filename' => $filename,
             'size' => filesize($dir.'/'.$filename),
             'type' =>$details['mime'],
