@@ -356,15 +356,15 @@ class Larability {
       $data = curl_exec($ch);
       curl_close($ch);
 
-      if(file_put_contents($dir.'/'.$filename, $data))
+      if(file_put_contents(base_path().'/public'.$path, $data))
       {
-          $details = getimagesize($dir.'/'.$filename);
+          $details = getimagesize(base_path().'/public'.$path);
 
           return [
-            'absolutePath' => $dir.'/'.$filename,
+            'absolutePath' => base_path().'/public'.$path,
             'pathRelativeToPublic' => $path,
             'filename' => $filename,
-            'size' => filesize($dir.'/'.$filename),
+            'size' => filesize(base_path().'/public'.$path),
             'type' =>$details['mime'],
             'width' => $details[0],
             'height' => $details[1]
