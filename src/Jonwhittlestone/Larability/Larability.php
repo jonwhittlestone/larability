@@ -3,6 +3,7 @@
 use DOMDocument;
 use Config;
 
+
 /**
  * PHP Readability
  *
@@ -58,6 +59,7 @@ class Larability {
   // 需要删除的属性
   private $junkAttrs = Array("style", "class", "onclick", "onmouseover", "align", "border", "margin");
 
+
   public function read($url)
   {
     $this->getUrl($url);
@@ -81,7 +83,10 @@ class Larability {
 
   public function getUrl($url)
   {
-    $this->source = file_get_contents($url);
+    //$this->source = file_get_contents($url);
+    $client = new \GuzzleHttp\Client(['base_url' => $url]);
+    $response = $client->get();
+    $this->source = (string)$response->getBody();
   }
 
   /**
@@ -175,7 +180,8 @@ class Larability {
      *
      * @return String
      */
-    public function getTitle() {
+    public function getTitle()
+    {
         $split_point = ' - ';
         $titleNodes = $this->DOM->getElementsByTagName("title");
 

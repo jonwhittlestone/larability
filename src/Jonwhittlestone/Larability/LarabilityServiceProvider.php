@@ -35,8 +35,9 @@ class LarabilityServiceProvider extends ServiceProvider {
   		$loader->alias('Larability', 'Jonwhittlestone\Larability\Facades\Larability');
 		});
 
-		$this->app['larability'] = $this->app->share(function($app){
-			return new Larability;
+		$this->app['larability'] = $this->app->share(function($app)
+		{
+			return new Larability(new \GuzzleHttp\Client);
 		});
 	}
 
