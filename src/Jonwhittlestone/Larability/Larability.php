@@ -2,7 +2,7 @@
 
 use DOMDocument;
 use Config;
-use Exception;
+
 
 /**
  * PHP Readability
@@ -62,8 +62,7 @@ class Larability {
 
   public function read($url)
   {
-    $url = $this->getUrl($url);
-    if(!$url) return;
+    if(!$this->getUrl($url)) return false;
 
     $this->loadDomFromSource();
 
@@ -85,13 +84,14 @@ class Larability {
 
   public function getUrl($url)
   {
-    //$this->source = file_get_contents($url);
+    $client = new \GuzzleHttp\Client();
     try {
-      $client = new \GuzzleHttp\Client(['base_url' => $url]);
-      $response = $client->get();
+
+      $response = $client->get($url,['exceptions' => false]);
       $this->source = (string)$response->getBody();
+      return true;
     } catch( Exception $e){
-            return;
+            return false;
         }
 
   }
@@ -311,6 +311,7 @@ class Larability {
      */
     public function getLeadImageUrl($node,$pageUrl)
     {
+
         $images = $node->getElementsByTagName("img");
 
         if ($images->length && $leadImage = $images->item(0)) {
@@ -323,8 +324,8 @@ class Larability {
     public function saveLeadImage($pageUrl)
     {
 
-      $url = $this->getUrl($pageUrl);
-      if(!$url) return;
+      if(!$this->getUrl($pageUrl)) return false;
+
       $this->loadDomFromSource();
       $ContentBox = $this->getTopBox();
       $Target = $this->buildTarget($ContentBox);
@@ -371,6 +372,7 @@ class Larability {
     function getAbsoluteImageUrl($pageUrl,$imgSrc)
     {
       $imgInfo = parse_url($imgSrc);
+
       if (! empty($imgInfo['host'])) {
           //img src is already an absolute URL
           return $imgSrc;
