@@ -357,7 +357,8 @@ class Larability {
           $details = getimagesize($dir.'/'.$filename);
 
           return [
-            'path' => $path,
+            'absolutePath' => $dir.'/'.$filename,
+            'pathRelativeToBase' => $path,
             'filename' => $filename,
             'size' => filesize($dir.'/'.$filename),
             'type' =>$details['mime'],
