@@ -84,6 +84,7 @@ class Larability {
 
   public function getUrl($url)
   {
+
     $client = new \GuzzleHttp\Client();
     try {
 
@@ -336,6 +337,7 @@ class Larability {
       if($imageUrl == null) return;
 
       $parts = pathinfo($imageUrl);
+      $urlParts = parse_url($imageUrl);
 
       // download file
       $filename = $parts['filename'].'-'.time().'.'.$parts['extension'];
@@ -346,6 +348,8 @@ class Larability {
       }
 
       $path = Config::get('larability::leadImageStoragePath').'/'.date('Ymd').'/'.$filename;
+
+      $imageUrl = (isset($urlParts['query']) ? $imageUrl.'&cb='.rand(0,9999) : $imageUrl.'?cb='.rand(0,9999));
 
       $ch = curl_init($imageUrl);
       curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
