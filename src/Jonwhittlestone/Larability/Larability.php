@@ -110,6 +110,7 @@ class Larability {
     if(!$Target) return;
 
     $imageUrl = $this->getLeadImageUrl($Target, $pageUrl);
+
     if($imageUrl == null) return;
 
     $parts = pathinfo($imageUrl);
@@ -393,7 +394,6 @@ class Larability {
     public function getLeadImageUrl($node,$pageUrl)
     {
         $images = $node->getElementsByTagName("img");
-        //\Log::info( '** ' . $images->item(0)->getAttribute('src').' **' );
 
         if ($images->length && $leadImage = $images->item(0))
         {
