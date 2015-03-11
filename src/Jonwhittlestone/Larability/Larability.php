@@ -49,6 +49,8 @@ class Larability {
   // 章节的父元素列表
   private $parentNodes = array();
 
+  private $iteration;
+
   // 需要删除的标签
   // Note: added extra tags from https://github.com/ridcully
   private $junkTags = Array("style", "form", "iframe", "script", "button", "input", "textarea",
@@ -59,6 +61,15 @@ class Larability {
   // 需要删除的属性
   private $junkAttrs = Array("style", "class", "onclick", "onmouseover", "align", "border", "margin");
 
+  public function setIteration($iteration)
+  {
+    $this->iteration = $iteration;
+  }
+
+  public function getIteration()
+  {
+    return $this->iteration;
+  }
 
   public function read($url)
   {
@@ -68,6 +79,7 @@ class Larability {
 
     $title = $this->getTitle();
     $ContentBox = $this->getTopBox();
+
     if (!$this->DOM) return false;
     $Target = $this->buildTarget($ContentBox);
 
@@ -82,6 +94,62 @@ class Larability {
 
   }
 
+  public function saveLeadImage($pageUrl)
+  {
+
+    $this->source = null;
+    if(!$this->getUrl($pageUrl)) return false;
+
+    $this->loadDomFromSource();
+    $ContentBox = $this->getTopBox();
+
+    if (!$this->DOM) return false;
+
+    $Target = $this->buildTarget($ContentBox);
+
+    if(!$Target) return;
+
+    $imageUrl = $this->getLeadImageUrl($Target, $pageUrl);
+    if($imageUrl == null) return;
+
+    $parts = pathinfo($imageUrl);
+    $urlParts = parse_url($imageUrl);
+
+    // download file
+    $filename = $parts['filename'].'-'.time().'.'.$parts['extension'];
+    $dir = base_path().'/public'.Config::get('larability::leadImageStoragePath').'/'.date('Ymd');
+
+    if (!file_exists($dir) && !mkdir($dir, 0777, true)) {
+      return;
+    }
+
+    $path = Config::get('larability::leadImageStoragePath').'/'.date('Ymd').'/'.$filename;
+
+    $imageUrl = (isset($urlParts['query']) ? $imageUrl.'&cb='.rand(0,9999) : $imageUrl.'?cb='.rand(0,9999));
+
+    $ch = curl_init($imageUrl);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    $data = curl_exec($ch);
+    curl_close($ch);
+
+    if(file_put_contents(base_path().'/public'.$path, $data))
+    {
+        $details = getimagesize(base_path().'/public'.$path);
+
+        return [
+          'absolutePath' => base_path().'/public'.$path,
+          'pathRelativeToPublic' => $path,
+          'filename' => $filename,
+          'size' => filesize(base_path().'/public'.$path),
+          'type' =>$details['mime'],
+          'width' => $details[0],
+          'height' => $details[1]
+
+        ];
+    }
+
+  }
+
   public function getUrl($url)
   {
 
@@ -90,8 +158,12 @@ class Larability {
 
       $response = $client->get($url,['exceptions' => false]);
       $this->source = (string)$response->getBody();
+
       return true;
-    } catch( Exception $e){
+    }
+    catch( Exception $e)
+    {
+            unset($this->source);
             return false;
         }
 
@@ -147,6 +219,8 @@ class Larability {
 
             // insert proper
             $this->DOM->encoding = Larability::DOM_DEFAULT_CHARSET;
+
+
         } catch (Exception $e) {
             // ...
         }
@@ -154,6 +228,7 @@ class Larability {
 
   public function buildTarget($ContentBox)
   {
+
       // Check if we found a suitable top-box.
       if($ContentBox === null) return;// ['status' => 'fail', 'message' => Larability::MESSAGE_CAN_NOT_GET,'url' => $this->source].
 
@@ -211,13 +286,16 @@ class Larability {
      */
     private function getTopBox()
     {
+        $this->parentNodes = [];
         // 获得页面所有的章节
         $allParagraphs = $this->DOM->getElementsByTagName("p");
+
 
         // Study all the paragraphs and find the chunk that has the best score.
         // A score is determined by things like: Number of <p>'s, commas, special classes, etc.
         $i = 0;
-        while($paragraph = $allParagraphs->item($i++)) {
+        while($paragraph = $allParagraphs->item($i++))
+        {
             $parentNode   = $paragraph->parentNode;
             $contentScore = intval($parentNode->getAttribute(Larability::ATTR_CONTENT_SCORE));
             $className    = $parentNode->getAttribute("class");
@@ -258,12 +336,14 @@ class Larability {
 
         // Assignment from index for performance.
         //     See http://www.peachpit.com/articles/article.aspx?p=31567&seqNum=5
-        for ($i = 0, $len = sizeof($this->parentNodes); $i < $len; $i++) {
+        for ($i = 0, $len = sizeof($this->parentNodes); $i < $len; $i++)
+        {
             $parentNode      = $this->parentNodes[$i];
             $contentScore    = intval($parentNode->getAttribute(Larability::ATTR_CONTENT_SCORE));
             $orgContentScore = intval($topBox ? $topBox->getAttribute(Larability::ATTR_CONTENT_SCORE) : 0);
 
-            if ($contentScore && $contentScore > $orgContentScore) {
+            if ($contentScore && $contentScore > $orgContentScore)
+            {
                 $topBox = $parentNode;
             }
         }
@@ -312,67 +392,20 @@ class Larability {
      */
     public function getLeadImageUrl($node,$pageUrl)
     {
-
         $images = $node->getElementsByTagName("img");
+        //\Log::info( '** ' . $images->item(0)->getAttribute('src').' **' );
 
-        if ($images->length && $leadImage = $images->item(0)) {
+        if ($images->length && $leadImage = $images->item(0))
+        {
+            // todo. Guzzle available images to find largest image - $images->item(1)->getAttribute('src'));
+
             return (!strstr('http://',$leadImage->getAttribute("src")) ? $this->getAbsoluteImageUrl($pageUrl,$leadImage->getAttribute("src")) : $leadImage->getAttribute("src"));
         }
 
         return null;
     }
 
-    public function saveLeadImage($pageUrl)
-    {
 
-      if(!$this->getUrl($pageUrl)) return false;
-
-      $this->loadDomFromSource();
-      $ContentBox = $this->getTopBox();
-      $Target = $this->buildTarget($ContentBox);
-
-      if(!$Target) return;
-
-      $imageUrl = $this->getLeadImageUrl($Target, $pageUrl);
-      if($imageUrl == null) return;
-
-      $parts = pathinfo($imageUrl);
-      $urlParts = parse_url($imageUrl);
-
-      // download file
-      $filename = $parts['filename'].'-'.time().'.'.$parts['extension'];
-      $dir = base_path().Config::get('larability::leadImageStoragePath').'/'.date('Ymd');
-
-      if (!file_exists($dir) && !mkdir($dir, 0777, true)) {
-        return;
-      }
-
-      $path = Config::get('larability::leadImageStoragePath').'/'.date('Ymd').'/'.$filename;
-
-      $imageUrl = (isset($urlParts['query']) ? $imageUrl.'&cb='.rand(0,9999) : $imageUrl.'?cb='.rand(0,9999));
-
-      $ch = curl_init($imageUrl);
-      curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-      $data = curl_exec($ch);
-      curl_close($ch);
-
-      if(file_put_contents(base_path().'/public'.$path, $data))
-      {
-          $details = getimagesize(base_path().'/public'.$path);
-
-          return [
-            'absolutePath' => base_path().'/public'.$path,
-            'pathRelativeToPublic' => $path,
-            'filename' => $filename,
-            'size' => filesize(base_path().'/public'.$path),
-            'type' =>$details['mime'],
-            'width' => $details[0],
-            'height' => $details[1]
-
-          ];
-      }
-
-    }
 
     function getAbsoluteImageUrl($pageUrl,$imgSrc)
     {
@@ -398,6 +431,45 @@ class Larability {
           }
       }
     }
+
+    private function xmlToArray($root) {
+    $result = array();
+
+    if ($root->hasAttributes()) {
+        $attrs = $root->attributes;
+        foreach ($attrs as $attr) {
+            $result['@attributes'][$attr->name] = $attr->value;
+        }
+    }
+
+    if ($root->hasChildNodes()) {
+        $children = $root->childNodes;
+        if ($children->length == 1) {
+            $child = $children->item(0);
+            if ($child->nodeType == XML_TEXT_NODE) {
+                $result['_value'] = $child->nodeValue;
+                return count($result) == 1
+                    ? $result['_value']
+                    : $result;
+            }
+        }
+        $groups = array();
+        foreach ($children as $child) {
+            if (!isset($result[$child->nodeName])) {
+                $result[$child->nodeName] = $this->xmlToArray($child);
+            } else {
+                if (!isset($groups[$child->nodeName])) {
+                    $result[$child->nodeName] = array($result[$child->nodeName]);
+                    $groups[$child->nodeName] = 1;
+                }
+                $result[$child->nodeName][] = $this->xmlToArray($child);
+            }
+        }
+    }
+
+    return $result;
+}
+
 
 }
 
