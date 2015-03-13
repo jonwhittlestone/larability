@@ -1,6 +1,8 @@
 Laravel 4.2 - Readability Library - Larability
 ===============
 
+[![Join the chat at https://gitter.im/jonwhittlestone/larability](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jonwhittlestone/larability?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Larability is a fork of [PHP Readability Library](https://github.com/feelinglucky/php-readability) for use with Laravel 4.
 
 #### Quick Start
